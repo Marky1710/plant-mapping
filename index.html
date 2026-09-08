@@ -1,0 +1,935 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Tree Mapping | Plant Registry</title>
+
+    <style>
+        :root {
+            --green: #1b5e20;
+            --light: #f1f8e9;
+            --border: #c8e6c9;
+            --text: #222;
+            --muted: #666;
+            --white: #fff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: "Segoe UI", Tahoma, sans-serif;
+        }
+
+        body {
+            color: var(--text);
+            line-height: 1.55;
+            background: var(--white);
+        }
+
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 5;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            padding: 16px 5%;
+            color: var(--white);
+            background: var(--green);
+            box-shadow: 0 2px 6px #0003;
+        }
+
+        .logo {
+            font-size: 23px;
+            font-weight: 700;
+        }
+
+        nav {
+            display: flex;
+            gap: 22px;
+        }
+
+        nav a {
+            padding: 4px 0;
+            color: var(--white);
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        nav a:hover,
+        nav a.active {
+            border-bottom: 2px solid var(--border);
+        }
+
+        .page {
+            display: none;
+            min-height: calc(100vh - 70px);
+            padding: 45px 5%;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        #home {
+            display: none;
+            align-content: center;
+            text-align: center;
+            background: var(--light);
+        }
+
+        #home.active {
+            display: grid;
+        }
+
+        .hero {
+            max-width: 760px;
+            margin: auto;
+        }
+
+        h1 {
+            margin-bottom: 15px;
+            color: var(--green);
+            font-size: clamp(34px, 6vw, 52px);
+        }
+
+        .hero p {
+            margin-bottom: 28px;
+            color: #555;
+            font-size: 18px;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: 0;
+            border-radius: 25px;
+            color: var(--white);
+            background: var(--green);
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        .mapping {
+            display: grid;
+            grid-template-columns: 1fr 1.4fr;
+            gap: 25px;
+            margin-top: 22px;
+        }
+
+        .panel {
+            padding: 22px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: #fafafa;
+            box-shadow: 0 3px 10px #0000000d;
+        }
+
+        h2,
+        h3 {
+            color: var(--green);
+        }
+
+        h3 {
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        #search {
+            width: 100%;
+            margin-bottom: 12px;
+            padding: 11px;
+            border: 1px solid #bbb;
+            border-radius: 7px;
+            font-size: 15px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(125px, 1fr));
+            gap: 10px;
+            max-height: 540px;
+            overflow: auto;
+        }
+
+        .card {
+            padding: 13px 7px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--white);
+            text-align: center;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.2s;
+        }
+
+        .card:hover,
+        .card.selected {
+            color: var(--white);
+            background: var(--green);
+            transform: translateY(-2px);
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: 32% 68%;
+            gap: 10px;
+            padding: 11px 0;
+            border-bottom: 1px solid #e5e5e5;
+        }
+
+        .label {
+            color: var(--green);
+            font-weight: 700;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            color: var(--white);
+            background: #4caf50;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .photo {
+            width: 100%;
+            max-width: 420px;
+            max-height: 300px;
+            margin-top: 5px;
+            border-radius: 8px;
+            object-fit: cover;
+        }
+
+        .placeholder {
+            padding: 45px 10px;
+            color: #777;
+            text-align: center;
+        }
+
+        .overview {
+            max-width: 900px;
+            margin: auto;
+        }
+
+        .overview h2 {
+            margin: 25px 0 8px;
+        }
+
+        .overview ul {
+            margin-left: 22px;
+        }
+
+        footer {
+            padding: 18px;
+            color: #ccc;
+            background: #212121;
+            text-align: center;
+        }
+
+        @media (max-width: 800px) {
+            header {
+                flex-direction: column;
+            }
+
+            nav {
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 12px;
+            }
+
+            .mapping {
+                grid-template-columns: 1fr;
+            }
+
+            .row {
+                grid-template-columns: 1fr;
+                gap: 3px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="logo">Tree Mapping</div>
+
+        <nav aria-label="Main navigation">
+            <a id="nav-home" class="active" href="#home">Home</a>
+            <a id="nav-mapping" href="#mapping">Plant Registry</a>
+            <a id="nav-overview" href="#overview">Project Overview</a>
+        </nav>
+    </header>
+
+    <main>
+        <section id="home" class="page active">
+            <div class="hero">
+                <h1>Green Cover Documentation</h1>
+                <p>
+                    Interactive documentation of 47 plants recorded in the
+                    supplied field photographs, with species identification,
+                    condition, observations and image references.
+                </p>
+                <button id="exploreBtn" type="button">Explore Plant Registry</button>
+            </div>
+        </section>
+
+        <section id="mapping" class="page">
+            <h2>Interactive Plant Database</h2>
+            <p style="color: #666; margin-top: 4px;">
+                Select a plant or search by common/scientific name.
+            </p>
+
+            <div class="mapping">
+                <div class="panel">
+                    <h3>Plant Registry</h3>
+                    <input
+                        id="search"
+                        type="search"
+                        placeholder="Search plants..."
+                        aria-label="Search plants"
+                    >
+                    <div id="grid" class="grid"></div>
+                </div>
+
+                <div class="panel">
+                    <h3>Documentation Details</h3>
+                    <div id="details" class="placeholder">
+                        Select a plant to display its details.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="overview" class="page">
+            <div class="overview">
+                <h2>CEP Subject Evaluation: Tree Mapping Framework</h2>
+                <p>
+                    This project compiles baseline environmental observations
+                    from field photographs into a searchable plant registry.
+                </p>
+
+                <h2>Field Methodology</h2>
+                <p>
+                    Photographs are used as the primary visual record. Species
+                    identifications are based on visible characteristics; where
+                    the photograph does not support species-level certainty,
+                    the record uses a genus-level or approximate identification.
+                </p>
+
+                <h2>Core Deliverables</h2>
+                <ul>
+                    <li>Plant-by-plant registry records</li>
+                    <li>Health/condition observations</li>
+                    <li>Image-linked documentation</li>
+                    <li>Location information where readable from the supplied photographs</li>
+                </ul>
+
+                <h2>Important Data Note</h2>
+                <p>
+                    Heights were not invented where no measurement was visible.
+                    Likewise, exact GPS values are included only where they were
+                    available from the earlier records; the remaining photographs
+                    are identified as Mumbai, Maharashtra, India rather than
+                    assigning unsupported coordinates.
+                </p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        © 2026 CEP Project Portfolio - Tree Mapping Framework
+    </footer>
+
+    <script>
+        const plants = [
+    {
+        "id": 1,
+        "name": "Coleus",
+        "scientific": "Coleus scutellarioides",
+        "condition": "Healthy",
+        "height": "5.4 m",
+        "about": "Campus entrance shade; a hardy evergreen commonly used for shade and urban planting.",
+        "location": "19.129516, 72.867978",
+        "image": "images/plant1.jpg"
+    },
+    {
+        "id": 2,
+        "name": "Ginseng Ficus",
+        "scientific": "Ficus microcarpa",
+        "condition": "Fair",
+        "height": "6.2 m",
+        "about": "Courtyard centerpiece with broad foliage; minor leaf shedding was noted.",
+        "location": "19.129530, 72.867982",
+        "image": "images/plant2.jpg"
+    },
+    {
+        "id": 3,
+        "name": "Desert Rose",
+        "scientific": "Adenium obesum",
+        "condition": "Healthy",
+        "height": "Not measured",
+        "about": "Succulent ornamental with a swollen stem and pink flowers; suited to bright conditions.",
+        "location": "19.129533, 72.867984",
+        "image": "images/plant3.jpg"
+    },
+    {
+        "id": 4,
+        "name": "Variegated Snake Plant",
+        "scientific": "Dracaena trifasciata",
+        "condition": "Healthy",
+        "height": "Not measured",
+        "about": "Upright variegated foliage; a low-maintenance ornamental suitable for containers.",
+        "location": "19.129535, 72.867985",
+        "image": "images/plant4.jpg"
+    },
+    {
+        "id": 5,
+        "name": "Echeveria",
+        "scientific": "Echeveria sp.",
+        "condition": "Healthy",
+        "height": "Not measured",
+        "about": "Compact rosette-forming succulent; identification is kept at genus level from the photograph.",
+        "location": "19.129543, 72.867989",
+        "image": "images/plant5.jpg"
+    },
+    {
+        "id": 6,
+        "name": "Zebra Haworthia",
+        "scientific": "Haworthiopsis attenuata",
+        "condition": "Healthy",
+        "height": "Not measured",
+        "about": "Small striped succulent with pointed leaves; identification is based on visible morphology.",
+        "location": "19.129535, 72.867993",
+        "image": "images/plant6.jpg"
+    },
+    {
+        "id": 7,
+        "name": "Wishbone Flower",
+        "scientific": "Torenia fournieri",
+        "condition": "Healthy",
+        "height": "Not measured",
+        "about": "Flowering ornamental with purple-blue blooms; commonly grown in garden beds and containers.",
+        "location": "19.130032, 72.868717",
+        "image": "images/plant7.jpg"
+    },
+    {
+        "id": 8,
+        "name": "Wishbone Flower",
+        "scientific": "Torenia fournieri",
+        "condition": "Healthy",
+        "height": "Not measured",
+        "about": "White-flowered torenia-type ornamental; species identification is based on the visible plant form.",
+        "location": "19.129828, 72.867851",
+        "image": "images/plant8.jpg"
+    },
+    {
+        "id": 9,
+        "name": "Heartleaf Philodendron",
+        "scientific": "Philodendron hederaceum",
+        "condition": "Healthy",
+        "height": "Not measured",
+        "about": "Trailing foliage plant with heart-shaped leaves; useful as an ornamental ground or container plant.",
+        "location": "19.129650, 72.867851",
+        "image": "images/plant9.jpg"
+    },
+    {
+        "id": 10,
+        "name": "Juniper",
+        "scientific": "Juniperus sp.",
+        "condition": "Healthy",
+        "height": "Not measured",
+        "about": "Fine-leaved ornamental conifer-like plant; identification is kept at genus level from the photograph.",
+        "location": "19.129616, 72.867904",
+        "image": "images/plant10.jpg"
+    },
+    {
+        "id": 11,
+        "name": "Bird of Paradise",
+        "scientific": "Strelitzia reginae",
+        "condition": "Healthy",
+        "height": "Not measured",
+        "about": "Ornamental tropical plant with stiff leaves and an orange bird-like flower.",
+        "location": "19.129619, 72.867938",
+        "image": "images/plant11.jpg"
+    },
+    {
+        "id": 12,
+        "name": "Heliconia",
+        "scientific": "Heliconia sp.",
+        "condition": "Healthy",
+        "height": "Not measured",
+        "about": "Broad-leaved tropical ornamental; identification is kept at genus level from the photograph.",
+        "location": "Mumbai, Maharashtra, India",
+        "image": "images/plant12.jpg"
+    },
+    {
+        "id": 13,
+        "name": "Golden Duranta",
+        "scientific": "Duranta erecta",
+        "condition": "Healthy",
+        "height": "Not measured",
+        "about": "Bright yellow-green ornamental foliage forming a dense shrub.",
+        "location": "Mumbai, Maharashtra, India",
+        "image": "images/plant13.jpg"
+    },
+    {
+        "id": 14,
+        "name": "Purple Heart",
+        "scientific": "Tradescantia pallida",
+        "condition": "Healthy",
+        "height": "Not measured",
+        "about": "Purple trailing groundcover with succulent stems and foliage.",
+        "location": "Mumbai, Maharashtra, India",
+        "image": "images/plant14.jpg"
+    },
+    {
+        "id": 15,
+        "name": "Small-leaved Groundcover",
+        "scientific": "Pilea sp.",
+        "condition": "Healthy",
+        "height": "Not measured",
+        "about": "Dense fine-textured green groundcover; species-level identification is uncertain from the photograph.",
+        "location": "Mumbai, Maharashtra, India",
+        "image": "images/plant15.jpg"
+    },
+    {
+        "id": 16,
+        "name": "Aloe",
+        "scientific": "Aloe sp.",
+        "condition": "Healthy",
+        "height": "Not measured",
+        "about": "Rosette-forming succulent with long, fleshy, toothed leaves.",
+        "location": "Mumbai, Maharashtra, India",
+        "image": "images/plant16.jpg"
+    },
+    {
+        "id": 17,
+        "name": "Kalanchoe",
+        "scientific": "Kalanchoe sp.",
+        "condition": "Healthy",
+        "height": "Not measured",
+        "about": "Compact flowering succulent with fleshy leaves and small pink blooms.",
+        "location": "Mumbai, Maharashtra, India",
+        "image": "images/plant17.jpg"
+    },
+    {
+        "id": 18,
+        "name": "Lily Grass",
+        "scientific": "Liriope sp.",
+        "condition": "Healthy",
+        "height": "Not measured",
+        "about": "Dense clump of narrow strap-like leaves used as ornamental edging or groundcover.",
+        "location": "Mumbai, Maharashtra, India",
+        "image": "images/plant18.jpg"
+    },
+    {
+        "id": 19,
+        "name": "Money Plant",
+        "scientific": "Epipremnum aureum",
+        "condition": "Healthy",
+        "height": "Not measured",
+        "about": "Heart-leaved climbing/trailing ornamental with green foliage.",
+        "location": "Mumbai, Maharashtra, India",
+        "image": "images/plant19.jpg"
+    },
+    {
+        "id": 20,
+        "name": "Purple Heart",
+        "scientific": "Tradescantia pallida",
+        "condition": "Healthy",
+        "height": "Not measured",
+        "about": "Trailing purple ornamental with long narrow leaves, photographed in a hanging planter.",
+        "location": "Mumbai, Maharashtra, India",
+        "image": "images/plant20.jpg"
+    },
+    {
+        "id": 21,
+        "name": "Groundcover Vine",
+        "scientific": "Hedera sp.",
+        "condition": "Healthy",
+        "height": "Not measured",
+        "about": "Low-growing/trailing green foliage; exact species cannot be confirmed from the photograph.",
+        "location": "Mumbai, Maharashtra, India",
+        "image": "images/plant21.jpg"
+    },
+    {
+        "id": 22,
+        "name": "Kalanchoe",
+        "scientific": "Kalanchoe blossfeldiana",
+        "condition": "Healthy",
+        "height": "Not measured",
+        "about": "Flowering potted succulent with clusters of pink flowers.",
+        "location": "Mumbai, Maharashtra, India",
+        "image": "images/plant22.jpg"
+    },
+    {
+        "id": 23,
+        "name": "Bunny Ears Cactus",
+        "scientific": "Opuntia microdasys",
+        "condition": "Healthy",
+        "height": "Not measured",
+        "about": "Segmented cactus with flattened pads and small glochids.",
+        "location": "Mumbai, Maharashtra, India",
+        "image": "images/plant23.jpg"
+    },
+    {
+        "id": 24,
+        "name": "Ornamental Ficus",
+        "scientific": "Ficus sp.",
+        "condition": "Healthy",
+        "height": "Not measured",
+        "about": "Woody ornamental tree with dense green canopy; species-level identification is uncertain.",
+        "location": "Mumbai, Maharashtra, India",
+        "image": "images/plant24.jpg"
+    },
+    {
+        "id": 25,
+        "name": "Coconut Palm",
+        "scientific": "Cocos nucifera",
+        "condition": "Healthy",
+        "height": "Not measured",
+        "about": "Tall tropical palm with a crown of pinnate fronds.",
+        "location": "Mumbai, Maharashtra, India",
+        "image": "images/plant25.jpg"
+    },
+    {
+        "id": 26,
+        "name": "Curly Devil's Backbone",
+        "scientific": "Pedilanthus tithymaloides",
+        "condition": "Healthy",
+        "height": "Not measured",
+        "about": "Variegated ornamental foliage plant with broad, textured leaves.",
+        "location": "Mumbai, Maharashtra, India",
+        "image": "images/plant26.jpg"
+    },
+    {
+        "id": 27,
+        "name": "Ixora",
+        "scientific": "Ixora coccinea",
+        "condition": "Healthy",
+        "height": "Not measured",
+        "about": "Flowering shrub with dense clusters of red-orange flowers.",
+        "location": "Mumbai, Maharashtra, India",
+        "image": "images/plant27.jpg"
+    },
+    {
+        "id": 28,
+        "name": "Celosia",
+        "scientific": "Celosia spicata",
+        "condition": "Healthy",
+        "height": "Not measured",
+        "about": "Bright magenta flowering ornamental with upright feathery flower spikes.",
+        "location": "Mumbai, Maharashtra, India",
+        "image": "images/plant28.jpg"
+    },
+    {
+        "id": 29,
+        "name": "Marigold",
+        "scientific": "Tagetes sp.",
+        "condition": "Healthy",
+        "height": "Not measured",
+        "about": "Orange/yellow flowering bedding plant with dense flower heads.",
+        "location": "Mumbai, Maharashtra, India",
+        "image": "images/plant29.jpg"
+    },
+    {
+        "id": 30,
+        "name": "Marigold",
+        "scientific": "Tagetes sp.",
+        "condition": "Healthy",
+        "height": "Not measured",
+        "about": "Orange and yellow marigold-type flowering ornamental.",
+        "location": "Mumbai, Maharashtra, India",
+        "image": "images/plant30.jpg"
+    },
+    {
+        "id": 31,
+        "name": "Lantana",
+        "scientific": "Lantana camara",
+        "condition": "Healthy",
+        "height": "Not measured",
+        "about": "Flowering shrub with clustered pink flowers and textured foliage.",
+        "location": "Mumbai, Maharashtra, India",
+        "image": "images/plant31.jpg"
+    },
+    {
+        "id": 32,
+        "name": "Croton",
+        "scientific": "Codiaeum variegatum",
+        "condition": "Healthy",
+        "height": "Not measured",
+        "about": "Colorful ornamental foliage with yellow, green and reddish variegation.",
+        "location": "Mumbai, Maharashtra, India",
+        "image": "images/plant32.jpg"
+    },
+    {
+        "id": 33,
+        "name": "Pothos",
+        "scientific": "Epipremnum aureum",
+        "condition": "Healthy",
+        "height": "Not measured",
+        "about": "Broad green heart-shaped leaves; commonly grown as a climber or container ornamental.",
+        "location": "Mumbai, Maharashtra, India",
+        "image": "images/plant33.jpg"
+    },
+    {
+        "id": 34,
+        "name": "Asparagus Fern",
+        "scientific": "Asparagus densiflorus",
+        "condition": "Healthy",
+        "height": "Not measured",
+        "about": "Fine, feathery green foliage forming a dense ornamental mass.",
+        "location": "Mumbai, Maharashtra, India",
+        "image": "images/plant34.jpg"
+    },
+    {
+        "id": 35,
+        "name": "Hibiscus",
+        "scientific": "Hibiscus rosa-sinensis",
+        "condition": "Healthy",
+        "height": "Not measured",
+        "about": "Flowering shrub with a prominent red hibiscus bloom.",
+        "location": "Mumbai, Maharashtra, India",
+        "image": "images/plant35.jpg"
+    },
+    {
+        "id": 36,
+        "name": "Pink Polka Dot Plant",
+        "scientific": "Hypoestes phyllostachya",
+        "condition": "Healthy",
+        "height": "Not measured",
+        "about": "Pink-dominant spotted foliage ornamental with strongly patterned leaves.",
+        "location": "Mumbai, Maharashtra, India",
+        "image": "images/plant36.jpg"
+    },
+    {
+        "id": 37,
+        "name": "Aglaonema",
+        "scientific": "Aglaonema sp.",
+        "condition": "Healthy",
+        "height": "Not measured",
+        "about": "Variegated foliage plant with green, cream and pink tones.",
+        "location": "Mumbai, Maharashtra, India",
+        "image": "images/plant37.jpg"
+    },
+    {
+        "id": 38,
+        "name": "Snow-in-Summer",
+        "scientific": "Euphorbia leucocephala",
+        "condition": "Healthy",
+        "height": "Not measured",
+        "about": "Fine-textured pale variegated foliage; species identification is approximate from the photograph.",
+        "location": "Mumbai, Maharashtra, India",
+        "image": "images/plant38.jpg"
+    },
+    {
+        "id": 39,
+        "name": "Ornamental Tree",
+        "scientific": "Ficus sp.",
+        "condition": "Healthy",
+        "height": "Not measured",
+        "about": "Young woody plant/tree photographed among surrounding vegetation; exact species is uncertain.",
+        "location": "Mumbai, Maharashtra, India",
+        "image": "images/plant39.jpg"
+    },
+    {
+        "id": 40,
+        "name": "Black Haworthia",
+        "scientific": "Haworthiopsis sp.",
+        "condition": "Healthy",
+        "height": "Not measured",
+        "about": "Compact dark-leaved succulent rosette in a container; genus-level identification is safest.",
+        "location": "Mumbai, Maharashtra, India",
+        "image": "images/plant40.jpg"
+    },
+    {
+        "id": 41,
+        "name": "Ginseng Ficus",
+        "scientific": "Ficus microcarpa",
+        "condition": "Healthy",
+        "height": "Not measured",
+        "about": "Bonsai-style woody ornamental with exposed swollen roots and a compact canopy.",
+        "location": "Mumbai, Maharashtra, India",
+        "image": "images/plant41.jpg"
+    },
+    {
+        "id": 42,
+        "name": "Banana",
+        "scientific": "Musa sp.",
+        "condition": "Healthy",
+        "height": "Not measured",
+        "about": "Broad-leaved tropical plant growing in a row; identification is kept at genus level.",
+        "location": "Mumbai, Maharashtra, India",
+        "image": "images/plant42.jpg"
+    },
+    {
+        "id": 43,
+        "name": "Bird of Paradise",
+        "scientific": "Strelitzia reginae",
+        "condition": "Healthy",
+        "height": "Not measured",
+        "about": "Tropical ornamental with orange flowers and large upright leaves.",
+        "location": "Mumbai, Maharashtra, India",
+        "image": "images/plant43.jpg"
+    },
+    {
+        "id": 44,
+        "name": "Poinsettia",
+        "scientific": "Euphorbia pulcherrima",
+        "condition": "Healthy",
+        "height": "Not measured",
+        "about": "Red-bracted ornamental plant with strongly colored upper foliage.",
+        "location": "Mumbai, Maharashtra, India",
+        "image": "images/plant44.jpg"
+    },
+    {
+        "id": 45,
+        "name": "Song of India",
+        "scientific": "Dracaena reflexa",
+        "condition": "Healthy",
+        "height": "Not measured",
+        "about": "Narrow arching leaves with cream-green striping; common tropical ornamental.",
+        "location": "Mumbai, Maharashtra, India",
+        "image": "images/plant45.jpg"
+    },
+    {
+        "id": 46,
+        "name": "Asparagus Fern",
+        "scientific": "Asparagus densiflorus",
+        "condition": "Healthy",
+        "height": "Not measured",
+        "about": "Tall fine-textured green ornamental with feathery foliage.",
+        "location": "Mumbai, Maharashtra, India",
+        "image": "images/plant46.jpg"
+    },
+    {
+        "id": 47,
+        "name": "Fan Palm",
+        "scientific": "Livistona sp.",
+        "condition": "Healthy",
+        "height": "Not measured",
+        "about": "Palm with large fan-shaped fronds; species-level identification is uncertain from the photograph.",
+        "location": "Mumbai, Maharashtra, India",
+        "image": "images/plant47.jpg"
+    }
+];
+
+        const $ = (id) => document.getElementById(id);
+
+        function show(pageId) {
+            document.querySelectorAll(".page").forEach((page) => {
+                page.classList.toggle("active", page.id === pageId);
+            });
+
+            document.querySelectorAll("nav a").forEach((link) => {
+                link.classList.toggle("active", link.id === `nav-${pageId}`);
+            });
+
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+
+        function renderList() {
+            const query = $("search").value.trim().toLowerCase();
+
+            const filteredPlants = plants.filter((plant) =>
+                `${plant.name} ${plant.scientific} ${plant.id}`
+                    .toLowerCase()
+                    .includes(query)
+            );
+
+            $("grid").innerHTML = filteredPlants.map((plant) => `
+                <div class="card" id="card-${plant.id}" data-id="${plant.id}">
+                    #${plant.id}<br>${plant.name}
+                </div>
+            `).join("");
+
+            $("grid").querySelectorAll(".card").forEach((card) => {
+                card.addEventListener("click", () => showDetails(Number(card.dataset.id)));
+            });
+        }
+
+        function showDetails(id) {
+            const plant = plants.find((item) => item.id === id);
+            if (!plant) return;
+
+            document.querySelectorAll(".card").forEach((card) => {
+                card.classList.remove("selected");
+            });
+
+            $(`card-${id}`)?.classList.add("selected");
+
+            $("details").className = "";
+
+            $("details").innerHTML = `
+                <div class="row">
+                    <div class="label">Plant ID</div>
+                    <div>#${plant.id}</div>
+                </div>
+
+                <div class="row">
+                    <div class="label">Common Name</div>
+                    <div>${plant.name}</div>
+                </div>
+
+                <div class="row">
+                    <div class="label">Scientific Name</div>
+                    <div><i>${plant.scientific}</i></div>
+                </div>
+
+                <div class="row">
+                    <div class="label">Condition</div>
+                    <div><span class="badge">${plant.condition}</span></div>
+                </div>
+
+                <div class="row">
+                    <div class="label">Measured Height</div>
+                    <div>${plant.height}</div>
+                </div>
+
+                <div class="row">
+                    <div class="label">Location / GPS</div>
+                    <div>${plant.location}</div>
+                </div>
+
+                <div class="row">
+                    <div class="label">Field Observation</div>
+                    <div>${plant.about}</div>
+                </div>
+
+                <div class="row">
+                    <div class="label">Plant Image</div>
+                    <div>
+                        <img
+                            class="photo"
+                            src="${plant.image}"
+                            alt="${plant.name}"
+                            onerror="this.alt='Image unavailable'; this.style.display='none';"
+                        >
+                    </div>
+                </div>
+            `;
+        }
+
+        document.querySelectorAll("nav a").forEach((link) => {
+            link.addEventListener("click", (event) => {
+                event.preventDefault();
+                show(link.getAttribute("href").substring(1));
+            });
+        });
+
+        $("exploreBtn").addEventListener("click", () => show("mapping"));
+        $("search").addEventListener("input", renderList);
+
+        renderList();
+    </script>
+</body>
+</html>
